@@ -60,14 +60,14 @@ function load_mailbox(mailbox) {
 }
 
 function load_inbox(inbox) {
-  console.log("loading inbox");
 
   // Make a call to the API
   fetch(`/emails/${inbox}`)
   .then(response => response.json())
   .then(emails => {
-    console.log(emails);
     emails.forEach(email => {
+
+      // Add elements to the DOM
       const emailContainer = document.createElement('div');
       emailContainer.setAttribute('class', 'email-container');
 
