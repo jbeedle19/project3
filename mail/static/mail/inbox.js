@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 function compose_email() {
   // Show compose view and hide other views
+  document.querySelector('#email-view').style.display = 'none';
   document.querySelector('#emails-view').style.display = 'none';
   document.querySelector('#compose-view').style.display = 'block';
 
@@ -37,6 +38,7 @@ function compose_email() {
 function load_mailbox(mailbox) {
 
   // Show the mailbox and hide other views
+  document.querySelector('#email-view').style.display = 'none';
   document.querySelector('#emails-view').style.display = 'block';
   document.querySelector('#compose-view').style.display = 'none';
 
@@ -88,7 +90,11 @@ function load_inbox(inbox) {
       }
 
       emailContainer.append(emailEl, subjectEl);
+      emailContainer.setAttribute('id', email.id);
       document.querySelector('#emails-container').append(emailContainer);
+      emailContainer.addEventListener('click', () => {
+        load_email(email.id);
+      });
     });
   });
 }
@@ -135,6 +141,9 @@ function load_sent(sent) {
 
       emailContainer.append(emailEl, subjectEl);
       document.querySelector('#emails-container').append(emailContainer);
+      emailContainer.addEventListener('click', () => {
+        load_email(email.id);
+      });
     });
   });
 }
@@ -166,12 +175,93 @@ function load_archived(archive) {
 
       emailContainer.append(emailEl, subjectEl);
       document.querySelector('#emails-container').append(emailContainer);
+      emailContainer.addEventListener('click', () => {
+        load_email(email.id);
+      });
     });
   });
 }
 
-function load_email() {
-  console.log("reading email");
+function load_email(id) {
+  // Show single email view and hide other views
+  document.querySelector('#email-view').style.display = 'block';
+  document.querySelector('#emails-view').style.display = 'none';
+  document.querySelector('#compose-view').style.display = 'none';
+
+  // Create a div to render emails in
+  const container = document.createElement('div');
+  container.setAttribute('id', 'single-email-container');
+  document.querySelector('#email-view').appendChild(container);
+
+  // Mark email as read
+  fetch(`/emails/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify({
+      read: true
+    })
+  });
+
+  // Make call to API
+  fetch(`/emails/${id}`)
+  .then(response => response.json())
+  .then(email => {
+    console.log(email);
+    // Add Email to the DOM
+    const senderEl = document.createElement('h4');
+    senderEl.innerHTML = `From: ${email.sender} on ${email.timestamp}`;
+
+    const recipientsEl = document.createElement('h6');
+    let recipients = '';
+      if (email.recipients.length != 1) {
+        email.recipients.forEach((val, key, arr) => {
+          if (Object.is(arr.length - 1, key)) {
+            recipients += ' ' + val;
+          } else {
+            recipients += ' ' + val + ','
+          }
+        });
+      } else {
+        recipients = email.recipients[0];
+      }
+    recipientsEl.innerHTML = `To: ${recipients}`;
+
+    const subjectEl = document.createElement('h6');
+    subjectEl.innerHTML = `Subject: ${email.subject}`;
+
+    const bodyEl = document.createElement('p');
+    bodyEl.innerHTML = email.body;
+
+    const actionContainer = document.createElement('div');
+    const archiveBtn = document.createElement('button');
+    archiveBtn.innerHTML = 'Archive';
+    archiveBtn.classList.add('btn', 'btn-danger');
+    archiveBtn.addEventListener('click', () => {
+      archive('archive', email.id);
+    });
+
+    const unarchiveBtn = document.createElement('button');
+    unarchiveBtn.innerHTML = 'Unarchive';
+    unarchiveBtn.classList.add('btn', 'btn-warning');
+    unarchiveBtn.addEventListener('click', () => {
+      archive('unarchive', email.id);
+    })
+
+    const replyBtn = document.createElement('button');
+    replyBtn.innerHTML = 'Reply';
+    replyBtn.classList.add('btn', 'btn-primary', 'ml-3');
+    replyBtn.addEventListener('click', () => {
+      reply(email.sender, email.subject, email.timestamp, email.body);
+    });
+
+    if (email.archived == true) {
+      actionContainer.append(unarchiveBtn, replyBtn);
+    } else {
+      actionContainer.append(archiveBtn, replyBtn);
+    }
+
+    // NOT QUITE WORKING, just keeps appending - need to replace/clear previous one first somehow
+    container.append(senderEl, recipientsEl, subjectEl, bodyEl, actionContainer);
+  });
 }
 
 function send_email(recipients, subject, body) {
@@ -185,7 +275,14 @@ function send_email(recipients, subject, body) {
   })
   .then(response => response.json())
   .then(result => {
-    console.log(result);
     load_mailbox('sent');
   });
+}
+
+function archive(option, id) {
+  console.log(`${option} email id - ${id}`);
+}
+
+function reply(sender, subject, timestamp, body) {
+  console.log(`replying to ${sender}`);
 }
