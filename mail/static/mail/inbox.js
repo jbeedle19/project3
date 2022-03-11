@@ -84,12 +84,49 @@ function load_inbox(inbox) {
 
       emailContainer.append(emailEl, subjectEl);
       document.querySelector('#emails-container').append(emailContainer);
-    })
-  })
+    });
+  });
 }
 
 function load_sent(sent) {
-  console.log("loading sent");
+  // Make a call to the API
+  fetch(`/emails/${sent}`)
+  .then(response => response.json())
+  .then(emails => {
+    console.log(emails);
+    emails.forEach(email => {
+
+      // Add elements to the DOM
+      const emailContainer = document.createElement('div');
+      emailContainer.setAttribute('class', 'email-container');
+
+      const emailEl = document.createElement('h5');
+      let recipients = '';
+      if (email.recipients.length != 1) {
+        email.recipients.forEach((val, key, arr) => {
+          if (Object.is(arr.length - 1, key)) {
+            recipients += ' ' + val;
+          } else {
+            recipients += ' ' + val + ','
+          }
+        });
+      } else {
+        recipients = email.recipients[0];
+      }
+      emailEl.innerHTML = `${recipients} on ${email.timestamp}`;
+
+      const subjectEl = document.createElement('h6');
+      subjectEl.innerHTML = email.subject;
+
+      emailContainer.classList.add('w-75', 'mx-auto','my-3', 'p-2', 'border', 'rounded');
+      if (email.read === true) {
+        emailContainer.classList.add('bg-light');
+      }
+
+      emailContainer.append(emailEl, subjectEl);
+      document.querySelector('#emails-container').append(emailContainer);
+    });
+  });
 }
 
 function load_archived(archive) {
@@ -109,5 +146,5 @@ function send_email(recipients, subject, body) {
   .then(result => {
     console.log(result);
     load_mailbox('sent');
-  })
+  });
 }
