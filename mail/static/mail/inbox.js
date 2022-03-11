@@ -65,6 +65,11 @@ function load_inbox(inbox) {
   fetch(`/emails/${inbox}`)
   .then(response => response.json())
   .then(emails => {
+    if (emails.length == 0) {
+      const noEmailEl = document.createElement('h5');
+      noEmailEl.innerHTML = 'No Emails';
+      document.querySelector('#emails-container').append(noEmailEl);
+    }
     emails.forEach(email => {
 
       // Add elements to the DOM
@@ -89,11 +94,16 @@ function load_inbox(inbox) {
 }
 
 function load_sent(sent) {
+
   // Make a call to the API
   fetch(`/emails/${sent}`)
   .then(response => response.json())
   .then(emails => {
-    console.log(emails);
+    if (emails.length == 0) {
+      const noEmailEl = document.createElement('h5');
+      noEmailEl.innerHTML = 'No Sent Emails';
+      document.querySelector('#emails-container').append(noEmailEl);
+    }
     emails.forEach(email => {
 
       // Add elements to the DOM
@@ -130,7 +140,38 @@ function load_sent(sent) {
 }
 
 function load_archived(archive) {
-  console.log("loading archive");
+
+  // Make a call to the API
+  fetch(`/emails/${archive}`)
+  .then(response => response.json())
+  .then(emails => {
+    if (emails.length == 0) {
+      const noEmailEl = document.createElement('h5');
+      noEmailEl.innerHTML = 'No Archived Emails';
+      document.querySelector('#emails-container').append(noEmailEl);
+    }
+    emails.forEach(email => {
+
+      // Add elements to the DOM
+      const emailContainer = document.createElement('div');
+      emailContainer.setAttribute('class', 'email-container');
+
+      const emailEl = document.createElement('h5');
+      emailEl.innerHTML = `${email.sender} on ${email.timestamp}`;
+
+      const subjectEl = document.createElement('h6');
+      subjectEl.innerHTML = email.subject;
+
+      emailContainer.classList.add('w-75', 'mx-auto','my-3', 'p-2', 'border', 'rounded', 'bg-light');
+
+      emailContainer.append(emailEl, subjectEl);
+      document.querySelector('#emails-container').append(emailContainer);
+    });
+  });
+}
+
+function load_email() {
+  console.log("reading email");
 }
 
 function send_email(recipients, subject, body) {
