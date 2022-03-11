@@ -42,6 +42,58 @@ function load_mailbox(mailbox) {
 
   // Show the mailbox name
   document.querySelector('#emails-view').innerHTML = `<h3>${mailbox.charAt(0).toUpperCase() + mailbox.slice(1)}</h3>`;
+
+
+  // Create a div to render emails in
+  const container = document.createElement('div');
+  container.setAttribute('id', 'emails-container');
+  document.querySelector('#emails-view').appendChild(container);
+
+  // Determine the mailbox the user wants and render the contents
+  if (mailbox === 'inbox') {
+    load_inbox(mailbox);
+  } else if (mailbox === 'sent') {
+    load_sent(mailbox);
+  } else if (mailbox === 'archive') {
+    load_archived(mailbox);
+  }
+}
+
+function load_inbox(inbox) {
+  console.log("loading inbox");
+
+  // Make a call to the API
+  fetch(`/emails/${inbox}`)
+  .then(response => response.json())
+  .then(emails => {
+    console.log(emails);
+    emails.forEach(email => {
+      const emailContainer = document.createElement('div');
+      emailContainer.setAttribute('class', 'email-container');
+
+      const emailEl = document.createElement('h5');
+      emailEl.innerHTML = `${email.sender} on ${email.timestamp}`;
+
+      const subjectEl = document.createElement('h6');
+      subjectEl.innerHTML = email.subject;
+
+      emailContainer.classList.add('w-75', 'mx-auto','my-3', 'p-2', 'border', 'rounded');
+      if (email.read === true) {
+        emailContainer.classList.add('bg-light');
+      }
+
+      emailContainer.append(emailEl, subjectEl);
+      document.querySelector('#emails-container').append(emailContainer);
+    })
+  })
+}
+
+function load_sent(sent) {
+  console.log("loading sent");
+}
+
+function load_archived(archive) {
+  console.log("loading archive");
 }
 
 function send_email(recipients, subject, body) {
@@ -50,7 +102,7 @@ function send_email(recipients, subject, body) {
     body: JSON.stringify({
       recipients: recipients,
       subject: subject,
-      body: body
+      body: body,
     })
   })
   .then(response => response.json())

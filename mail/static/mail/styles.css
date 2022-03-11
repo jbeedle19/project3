@@ -1,3 +1,7 @@
 textarea {
     min-height: 400px;
 }
+
+.email-container:hover {
+    background-color: #6c757d !important;
+}
