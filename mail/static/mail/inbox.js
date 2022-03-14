@@ -45,7 +45,6 @@ function load_mailbox(mailbox) {
   // Show the mailbox name
   document.querySelector('#emails-view').innerHTML = `<h3>${mailbox.charAt(0).toUpperCase() + mailbox.slice(1)}</h3>`;
 
-
   // Create a div to render emails in
   const container = document.createElement('div');
   container.setAttribute('id', 'emails-container');
@@ -184,14 +183,16 @@ function load_archived(archive) {
 
 function load_email(id) {
   // Show single email view and hide other views
-  document.querySelector('#email-view').style.display = 'block';
+  const emailView = document.querySelector('#email-view');
+  emailView.style.display = 'block';
   document.querySelector('#emails-view').style.display = 'none';
   document.querySelector('#compose-view').style.display = 'none';
 
   // Create a div to render emails in
+  emailView.innerHTML = '';
   const container = document.createElement('div');
   container.setAttribute('id', 'single-email-container');
-  document.querySelector('#email-view').appendChild(container);
+  emailView.appendChild(container);
 
   // Mark email as read
   fetch(`/emails/${id}`, {
@@ -205,7 +206,6 @@ function load_email(id) {
   fetch(`/emails/${id}`)
   .then(response => response.json())
   .then(email => {
-    console.log(email);
     // Add Email to the DOM
     const senderEl = document.createElement('h4');
     senderEl.innerHTML = `From: ${email.sender} on ${email.timestamp}`;
@@ -280,9 +280,50 @@ function send_email(recipients, subject, body) {
 }
 
 function archive(option, id) {
-  console.log(`${option} email id - ${id}`);
+  if (option === 'archive') {
+    fetch(`/emails/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({
+        archived: true
+      })
+    });
+  } else {
+    fetch(`/emails/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({
+        archived: false
+      })
+    });
+  }
+  load_mailbox('inbox');
 }
 
 function reply(sender, subject, timestamp, body) {
-  console.log(`replying to ${sender}`);
+  // Show compose view and hide other views
+  document.querySelector('#email-view').style.display = 'none';
+  document.querySelector('#emails-view').style.display = 'none';
+  document.querySelector('#compose-view').style.display = 'block';
+
+  // Store HTML elements
+  const recipientsEl = document.querySelector('#compose-recipients');
+  const subjectEl = document.querySelector('#compose-subject');
+  const bodyEl = document.querySelector('#compose-body');
+  const formEl = document.querySelector('#compose-form');
+
+  // Clear out composition fields
+  recipientsEl.value = sender;
+  if (subject.includes("RE:")) {
+    subjectEl.value = subject;
+  } else {
+    subjectEl.value = `RE: ${subject}`;
+  }
+  bodyEl.value = `On ${timestamp} ${sender} wrote:
+  ${body}`;
+
+  // Event Handler for sending Emails
+  formEl.addEventListener('submit', (e) => {
+    e.preventDefault();
+    send_email(recipientsEl.value, subjectEl.value, bodyEl.value);
+    return false;
+  });
 }
